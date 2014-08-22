@@ -1,0 +1,158 @@
+\documentclass[10pt,landscape]{article}
+\usepackage{multicol}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage[letterpaper,landscape]{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}% http://ctan.org/pkg/titlesec
+
+% To make this come out properly in landscape mode, do one of the following
+% 1.
+%  pdflatex latexsheet.tex
+%
+% 2.
+%  latex latexsheet.tex
+%  dvips -P pdf  -t landscape latexsheet.dvi
+%  ps2pdf latexsheet.ps
+
+
+\ifthenelse{\lengthtest { \paperwidth = 11in}}
+	{ \geometry{top=.5in,left=.5in,right=.5in,bottom=.5in} }
+	{\ifthenelse{ \lengthtest{ \paperwidth = 297mm}}
+		{\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} }
+		{\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm} }
+	}
+	
+%\geometry{top=1cm,left=1cm,right=1cm,bottom=1cm}
+
+% Turn off header and footer
+\pagestyle{empty}
+ 
+
+% Redefine section commands to use less space
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{0mm}%
+                                {-1ex plus -.5ex minus -.2ex}%
+                                {0.5ex plus .2ex}%x
+                                {\normalfont\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{0mm}%
+                                {-1explus -.5ex minus -.2ex}%
+                                {0.5ex plus .2ex}%
+                                {\normalfont\normalsize\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{0mm}%
+                                {-1ex plus -.5ex minus -.2ex}%
+                                {1ex plus .2ex}%
+                                {\normalfont\small\bfseries}}
+\makeatother
+
+% Numbering subsections continuously
+\let\oldsection\section
+\renewcommand{\section}{\oldsection*}
+\renewcommand{\thesubsection}{\arabic{subsection}}
+
+% Define BibTeX command
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% Don't print section numbers
+\setcounter{secnumdepth}{2}
+
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt plus 0.5ex}
+
+
+% -----------------------------------------------------------------------
+
+\begin{document}
+
+\raggedright
+\footnotesize
+
+\begin{multicols}{3}
+
+% multicol parameters
+% These lengths are set only within the two main columns
+%\setlength{\columnseprule}{0.25pt}
+\setlength{\premulticols}{1pt}
+\setlength{\postmulticols}{1pt}
+\setlength{\multicolsep}{1pt}
+\setlength{\columnsep}{2pt}
+
+%\begin{center}
+%     \Large{\textbf{Effective C++ Cheat Sheet}} \\
+%\end{center}
+
+\section{Shifting from C to C++}
+
+\subsection{Prefer \texttt{const} and \texttt{inline} to \texttt{\#define}}
+
+\subsection{Prefer \texttt{<iostream>} to \texttt{<stdio.h>}}
+
+\subsection{Prefer \texttt{new} and \texttt{delete} to \texttt{malloc} and \texttt{free}}
+
+\subsection{Prefer C++-style comment}
+
+\section{Memory Management}
+
+\subsection{Use same form of \texttt{new} and \texttt{delete}}
+\begin{tabular}{@{}ll@{}}
+\texttt{new class} & \texttt{delete *class} \\
+\texttt{new class[]} & \texttt{delete [] class} \\
+\end{tabular}
+
+\subsection{Use delete on pointer members in dtors}
+Avoid memory leak. \texttt{delete} a null pointer is always \emph{safe}
+
+\subsection{Be prepared for \textsf{out-of-memory} conditions}
+Always check whether the allocation succeed after \texttt{new}, using \texttt{try .. catch} block or \emph{assert NOT} null pointer.
+
+\begin{verbatim}
+#include <new>  // this handler invoked while fail to
+typedef void (*new_handler)();  // allocate req memory
+new_handler set_new_handler(new_handler p) throw();
+\end{verbatim}
+
+\begin{verbatim}
+class X { // specify new_hanlder for a class
+public:
+    static new_handler set_new_handler(new_handler p);
+    static void * operator new(size_t size);
+private:
+    static new_handler currentHandler;
+} // This is also useful for Object Pool
+\end{verbatim}
+
+\subsection{Follow the convention of \texttt{new} and \texttt{delete}}
+\begin{verbatim}
+class Base { // user-define new and delete just for this class
+    static void * operator new(size_t size);
+    static void operator delete(void * rawMemory, size_t size);
+} // compiler will fill size parameter automatically
+\end{verbatim}
+
+\subsection{You have to write normal form of \texttt{new}}
+That means if you want to write a new handler, which has extra parameters other than "normal" form mention in last item, you have to write normal \texttt{new} first.
+
+\subsection{Write \texttt{delete} if you write \texttt{delete}}
+
+
+
+\section{Ctors, Dtors, and =}
+
+\section{Classes and Funcs: Design and Declare}
+
+\section{Classes and Funcs: Implementation}
+
+\section{Inheritance and OOD}
+
+\section{Miscellany}
+
+\rule{0.3\linewidth}{0.25pt}
+\scriptsize
+
+Copyright \copyright\ 2014 Winston Chang
+
+\end{multicols}
+
+\end{document}
