@@ -5,6 +5,8 @@
 \usepackage[letterpaper,landscape]{geometry}
 \usepackage{hyperref}
 \usepackage{titlesec}% http://ctan.org/pkg/titlesec
+\usepackage{listings}
+\usepackage{color}
 
 % To make this come out properly in landscape mode, do one of the following
 % 1.
@@ -61,6 +63,27 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0pt plus 0.5ex}
 
+% Code block configs
+\lstset{
+  language=C++,
+  basicstyle=\linespread{.94}\ttfamily\scriptsize,
+  %aboveskip={-0ex},
+  %belowskip={-.2ex},
+  mathescape=true,
+  breaklines=true,
+  %frame=single,
+  backgroundcolor=\color{white},
+}
+
+% Config enumerate
+\let\oldenumerate\enumerate
+\renewcommand{\enumerate}{
+  \oldenumerate
+  \setlength{\itemsep}{0pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}
+
 
 % -----------------------------------------------------------------------
 
@@ -102,43 +125,72 @@
 \end{tabular}
 
 \subsection{Use delete on pointer members in dtors}
+\label{sec:delete_pointer_in_dtor}
 Avoid memory leak. \texttt{delete} a null pointer is always \emph{safe}
 
 \subsection{Be prepared for \textsf{out-of-memory} conditions}
-Always check whether the allocation succeed after \texttt{new}, using \texttt{try .. catch} block or \emph{assert NOT} null pointer.
-
-\begin{verbatim}
-#include <new>  // this handler invoked while fail to
-typedef void (*new_handler)();  // allocate req memory
+Always check whether the allocation succeed after \texttt{new}, using \texttt{try .. catch} block or \emph{assert NOT} null pointer. \\
+This handler invoked while fail to allocate req memory, \texttt{<new>} \\
+\begin{lstlisting}
+typedef void (*new_handler)();
 new_handler set_new_handler(new_handler p) throw();
-\end{verbatim}
+\end{lstlisting}
 
-\begin{verbatim}
+\begin{lstlisting}
 class X { // specify new_hanlder for a class
 public:
-    static new_handler set_new_handler(new_handler p);
-    static void * operator new(size_t size);
+  static new_handler set_new_handler(new_handler p);
+  static void * operator new(size_t size);
 private:
-    static new_handler currentHandler;
+  static new_handler currentHandler;
 } // This is also useful for Object Pool
-\end{verbatim}
+\end{lstlisting}
 
 \subsection{Follow the convention of \texttt{new} and \texttt{delete}}
-\begin{verbatim}
-class Base { // user-define new and delete just for this class
-    static void * operator new(size_t size);
-    static void operator delete(void * rawMemory, size_t size);
+\label{sec:user_new_delete}
+This normal form of this two operators is following \\
+\begin{lstlisting}
+class Base { // user-define just for this class
+  static void * operator new(size_t size);
+  static void operator delete(void *p, size_t size);
 } // compiler will fill size parameter automatically
-\end{verbatim}
+\end{lstlisting}
 
 \subsection{You have to write normal form of \texttt{new}}
 That means if you want to write a new handler, which has extra parameters other than "normal" form mention in last item, you have to write normal \texttt{new} first.
 
 \subsection{Write \texttt{delete} if you write \texttt{delete}}
-
-
+Once you define your own \texttt{new}, you probably change the behavior of default allocation. For example, if you apply memory pool in allocation function, you should use the pool as proxy to manage the memory allocation and collection. Add this clause to origin defintion of class in Item ~\ref{sec:user_new_delete}: \\
+\begin{lstlisting}
+static Pool memPool;
+\end{lstlisting}
+Where memPool is \textsf{non-local static object}. See Item ~\ref{sec:non_local_static_object}
 
 \section{Ctors, Dtors, and =}
+
+\subsection{Declare a copy ctor and = for class with dynamically allocated memory}
+Default assignment operator \texttt{=} only flat copy the value of every member variables from right object to left object.
+If the object contains pointer variables, issues come out. Because you have to write delete pointer statements in dtors due to Item ~\ref{sec:delete_pointer_in_dtor}. Once one of the two object been deleted, the content that the pointer indicates will be freed. Hence the member pointer of another object will pointer to a memory area that already freed. That probably raise a segment fault exception. \\
+In ctor and \texttt{=}, you have three strategy: \\
+\begin{tabular}{@{}ll@{}}
+\verb!Strategy! & Decription and Example\\
+\verb!Alloc new memory & Deep Copy! & STL containers: vector\\
+\verb!Reference counter! & STL C++11 shared\_ptr\\
+\end{tabular}
+
+\subsection{Prefer initialization to assignment in ctors}
+Because construction of objects proceeds in two steps:\\
+\begin{enumerate}
+  \item Initialization of data members. See Item ~\ref{sec:initialization_list_order}
+  \item Execution of the body of ctors
+\end{enumerate}
+If you write assignment statement in ctor body, (I guess you must want to initialze the object this way), after read two steps above, you will realize that the initalzation operations have been executed twice!\\
+That is the reason you should use init list instead of assigns.\\
+However, if you have a lot of primitive type members in your class, using assignments is \emph{fine}.\\
+Additionally, there is \emph{NO} operational difference between initialization and assignment for non-const, non-reference objects of build-in(primitive) types.
+
+\subsection{List members in an initialization list in the order in which they are declared}
+\label{sec:initialization_list_order}
 
 \section{Classes and Funcs: Design and Declare}
 
@@ -151,7 +203,7 @@ That means if you want to write a new handler, which has extra parameters other 
 \rule{0.3\linewidth}{0.25pt}
 \scriptsize
 
-Copyright \copyright\ 2014 Winston Chang
+Copyright \copyright\ 2014 Jun Yu
 
 \end{multicols}
 
