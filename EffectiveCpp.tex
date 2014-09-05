@@ -36,7 +36,7 @@
 \renewcommand{\section}{\@startsection{section}{1}{0mm}%
                                 {-1ex plus -.5ex minus -.2ex}%
                                 {0.5ex plus .2ex}%x
-                                {\normalfont\large\bfseries}}
+                                {\normalfont\large\bfseries\underline}}
 \renewcommand{\subsection}{\@startsection{subsection}{2}{0mm}%
                                 {-1explus -.5ex minus -.2ex}%
                                 {0.5ex plus .2ex}%
@@ -102,9 +102,9 @@
 \setlength{\multicolsep}{1pt}
 \setlength{\columnsep}{2pt}
 
-%\begin{center}
-%     \Large{\textbf{Effective C++ Cheat Sheet}} \\
-%\end{center}
+\begin{center}
+     \Large{\textbf{Effective C++ Cheat Sheet}} \\
+\end{center}
 
 \section{Shifting from C to C++}
 
@@ -159,7 +159,7 @@ class Base { // user-define just for this class
 \subsection{You have to write normal form of \texttt{new}}
 That means if you want to write a new handler, which has extra parameters other than "normal" form mention in last item, you have to write normal \texttt{new} first.
 
-\subsection{Write \texttt{delete} if you write \texttt{delete}}
+\subsection{Write \texttt{delete} if you write \texttt{new}}
 Once you define your own \texttt{new}, you probably change the behavior of default allocation. For example, if you apply memory pool in allocation function, you should use the pool as proxy to manage the memory allocation and collection. Add this clause to origin defintion of class in Item ~\ref{sec:user_new_delete}: \\
 \begin{lstlisting}
 static Pool memPool;
@@ -191,8 +191,45 @@ Additionally, there is \emph{NO} operational difference between initialization a
 
 \subsection{List members in an initialization list in the order in which they are declared}
 \label{sec:initialization_list_order}
+Otherwise the compiler has to keep track of the order in which the members were initialized for \emph{each object}. By the way, The destructor for members are always called in the inverse order of their constructors.
+
+\subsection{Make sure base class have virtual dtor}
+When you try to \texttt{delete} a derived class object through a base class pointer and the base class has a \emph{non-virtual} destructor, the results are \emph{undefined}. (Perhaps what happens at runtime is that derived class's destructor is \emph{never called}.
+
+\subsection{Have \texttt{=} return a reference to \texttt{*this}}
+The signiture of operator = is as follows, see ~\ref{sec:what_cpp_silently_writes_and_calls} \\
+\begin{lstlisting}
+C& C::operator= (const C&);  // overload encouraged
+\end{lstlisting}
+To allow chains of assignment, you should return a reference.
+and operators return a reference to their left-hand argument.\\
+Two reasons for this item:\\
+\begin{enumerate}
+  \item
+  If you try return a reference to right-hand argument, compiler will disallow you to do this because the signiture has \emph{non-const} return value, which confilcts with right-hand argument. You if try to declare a signiture with \emph{non-const} argument. See reason 2
+  \item
+  \begin{lstlisting}
+  String z = "Hello";
+  \end{lstlisting}
+  Compiler will translate to as follows. So that you have to declare a signiture with \emph{const} argument.
+  \begin{lstlisting}
+  const String temp("Hello");
+  String z = temp;
+  \end{lstlisting}
+\end{enumerate}
+
+\subsection{Check for assignment to self in operators}
+The general assignment operator looks like this:\\
+\begin{lstlisting}
+C& C::operator= (const C& rhs) {
+	if(this == &rhs) return *this;
+	/* ... */ }
+\end{lstlisting}
+A more sophisticated mechanism for identity is implement the identity method yourself. See ~\ref{sec:inheritance_of_interface_and_implementation}
 
 \section{Classes and Funcs: Design and Declare}
+
+
 
 \section{Classes and Funcs: Implementation}
 
